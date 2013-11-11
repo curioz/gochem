@@ -66,7 +66,7 @@ func TestQM(Te *testing.T) {
 	calc.HBElements = []string{"Cu", "Zn"}
 	calc.CConstraints = []int{0, 10, 20}
 	calc.SetDefaults()
-	orca := NewOrcaRunner()
+	orca := NewOrcaHandle()
 	orca.SetnCPU(16) /////////////////////
 	atoms := chem.ZeroVecs(mol.Len())
 	mol.Next(atoms)
@@ -74,7 +74,7 @@ func TestQM(Te *testing.T) {
 	if err = os.Chdir("../test"); err != nil {
 		Te.Error(err)
 	}
-	_ = orca.BuildInput(mol, atoms, calc)
+	_ = orca.BuildInput(atoms, mol, calc)
 	//Now anothertest with HF-3c
 	calc.HBAtoms = nil
 	calc.HBElements = nil
@@ -85,15 +85,15 @@ func TestQM(Te *testing.T) {
 	orca.SetName("HF3c")
 	orca.SetnCPU(8)
 	//	fmt.Println(mol.Coords[0], "vieja")
-	_ = orca.BuildInput(mol, atoms, calc)
+	_ = orca.BuildInput(atoms, mol, calc)
 	path, _ := os.Getwd()
 	//	if err:=orca.Run(false); err!=nil{
 	//			Te.Error(err.Error())
 	//		}
 	fmt.Println(path)
 	//Now a MOPAC optimization with the same configuration.
-	mopac := NewMopacRunner()
-	mopac.BuildInput(mol, atoms, calc)
+	mopac := NewMopacHandle()
+	mopac.BuildInput(atoms, mol, calc)
 	mopaccommand := os.Getenv("MOPAC_LICENSE") + "/MOPAC2012.exe"
 	mopac.SetCommand(mopaccommand)
 	fmt.Println("command", mopaccommand)
@@ -104,7 +104,7 @@ func TestQM(Te *testing.T) {
 				Te.Error(err.Error())
 			}
 		}
-		energy, err := mopac.GetEnergy()
+		energy, err := mopac.Energy()
 		if err != nil {
 			if err.Error() == "Probable problem in calculation" {
 				fmt.Println(err.Error())
@@ -112,7 +112,7 @@ func TestQM(Te *testing.T) {
 				Te.Error(err)
 			}
 		}
-		geometry, err := mopac.GetGeometry(mol)
+		geometry, err := mopac.OptimizedGeometry(mol)
 		if err != nil {
 			if err.Error() == "Probable problem in calculation" {
 				fmt.Println(err.Error())
@@ -139,7 +139,7 @@ func TestQM(Te *testing.T) {
 
 
 //TestTurbo tests the QM functionality. It prepares input for Turbomole
-//Notice that 2 TM inputs cannot be in the same directory. Notice that TMRunner
+//Notice that 2 TM inputs cannot be in the same directory. Notice that TMHandle
 //supports ECPs
 func TesstTurbo(Te *testing.T) {
 	mol, err := chem.XYZRead("../test/ethanol.xyz")
@@ -168,25 +168,25 @@ func TesstTurbo(Te *testing.T) {
 	calc.RI = true
 	calc.Disperssion = "D3"
 	calc.CConstraints = []int{0, 3}
-	tm := NewTMRunner()
+	tm := NewTMHandle()
 	atoms := mol.Coords[0]
 	//original_dir, _ := os.Getwd() //will check in a few lines
 	//if err = os.Chdir("./test"); err != nil {
 	//	Te.Error(err)
 	//}
-	if err := tm.BuildInput(mol, atoms, calc); err != nil {
+	if err := tm.BuildInput(atoms, mol, calc); err != nil {
 		Te.Error(err)
 	}
 	//os.Chdir(original_dir)
 	if err := tm.Run(true); err != nil {
 		Te.Error(err)
 	}
-	energy, err := tm.GetEnergy()
+	energy, err := tm.Energy()
 	if err != nil {
 		Te.Error(err)
 	}
 	fmt.Println("energy", energy)
-	geo, err := tm.GetGeometry(mol)
+	geo, err := tm.OptimizedGeometry(mol)
 	if err != nil {
 		Te.Error(err)
 	}
@@ -216,22 +216,22 @@ func TestChemShell(Te *testing.T) {
 	calc.Grid = 4 //not supported yet, coming sun
 	calc.Disperssion = "D3"
 	calc.CConstraints = []int{0, 10, 20}
-	cs := NewCSRunner()
+	cs := NewCSHandle()
 	atoms := mol.Coords[0]
 	original_dir, _ := os.Getwd() //will check in a few lines
 	if err = os.Chdir("../test"); err != nil {
 		Te.Error(err)
 	}
-	err = cs.BuildInput(mol, atoms, calc)
+	err = cs.BuildInput(atoms, mol, calc)
 	qderror_handler(err, Te)
 	//now with a PDB
 	cs.SetCoordFormat("pdb")
 	cs.SetName("gochem_pdb")
-	err = cs.BuildInput(mol, atoms, calc)
+	err = cs.BuildInput(atoms, mol, calc)
 	qderror_handler(err, Te)
 	cs.SetName("gochem_sp")
 	calc.Optimize = false
-	err = cs.BuildInput(mol, atoms, calc)
+	err = cs.BuildInput(atoms, mol, calc)
 	qderror_handler(err, Te)
 	if err = os.Chdir(original_dir); err != nil {
 		Te.Error(err)

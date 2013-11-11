@@ -59,7 +59,7 @@ func chemDense2VecMatrix(A *chemDense) *VecMatrix {
 	return &VecMatrix{A.Dense}
 }
 
-func VecMatrix2chemDense(A *VecMatrix) *chemDense {
+func vecMatrix2chemDense(A *VecMatrix) *chemDense {
 	return &chemDense{A.Dense}
 }
 
@@ -123,7 +123,7 @@ func (F *VecMatrix) DelRow(A *VecMatrix, i int) {
 func (F *VecMatrix) NVecs() int {
 	r, c := F.Dims()
 	if c != 3 {
-		panic(Not3xXMatrix)
+		panic(not3xXMatrix)
 	}
 	return r
 

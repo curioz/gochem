@@ -78,12 +78,6 @@ func NewVecs(data []float64) (*VecMatrix, error) {
 	return &VecMatrix{r}, err
 }
 
-//Returns a view of the ith Vecinate. Note that the allocation is minimal
-//REMOVE!!!!
-func VecView(a *VecMatrix, i int) *VecMatrix {
-	ret := a.VecView(i)
-	return ret
-}
 
 //Puts a view of the given col of the matrix on the receiver
 func (F *VecMatrix) ColView(i int) *VecMatrix {
@@ -258,7 +252,7 @@ type chemDense struct {
 	*mat64.Dense
 }
 
-func NewchemDense(data []float64, r, c int) (*chemDense, error) {
+func newchemDense(data []float64, r, c int) (*chemDense, error) {
 	d, err := mat64.NewDense(r, c, data)
 	return &chemDense{d}, err
 }
@@ -358,7 +352,7 @@ func gnEigen(in *VecMatrix, epsilon float64) (*VecMatrix, []float64, error) {
 		for j := i + 1; j < eigrows; j++ {
 			vectorj := eig.evecs.RowView(j)
 			if math.Abs(vectori.Dot(vectorj)) > epsilon && i != j {
-				return eig.evecs, evals[:], NotOrthogonal
+				return eig.evecs, evals[:], notOrthogonal
 			}
 		}
 		if math.Abs(vectori.Norm(0)-1) > epsilon {
@@ -479,9 +473,9 @@ func (err gnError) Error() string { return string(err) }
 
 const (
 	//RM
-	Not3xXMatrix      = gnError("matrix: The other dimmension should be 3")
-	NotOrthogonal     = gnError("matrix: Vectors nor orthogonal")
-	NotEnoughElements = gnError("matrix: not enough elements")
+	not3xXMatrix      = gnError("matrix: The other dimmension should be 3")
+	notOrthogonal     = gnError("matrix: Vectors nor orthogonal")
+	notEnoughElements = gnError("matrix: not enough elements")
 	//end RM
 	gnErrIndexOutOfRange = gnError("matrix: index out of range")
 	gnErrZeroLength      = gnError("matrix: zero length in matrix definition")
