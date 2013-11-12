@@ -105,7 +105,11 @@ func (O *CSHandle) SetDefaults() {
 }
 
 //BuildInput builds a ChemShell input (at this point only for pure QM calculations with QCMine). Returns error on failure.
+//If you want to use the HF-3c you should have an environment variable valled "MINIX" pointing to the directory where the file
+//for the MINIX basis set in QCMine format (provided in gochem/test) is.
 func (O *CSHandle) BuildInput(coords *chem.VecMatrix, atoms chem.ReadRef, Q *Calc) error {
+	b := "\\\n             " //Formating things
+	sb := "\\\n    "
 	var nonfatal error
 	if atoms.Multi() != 1 {
 		return fmt.Errorf("Only closed shell supported for ChemShell")
@@ -128,6 +132,17 @@ func (O *CSHandle) BuildInput(coords *chem.VecMatrix, atoms chem.ReadRef, Q *Cal
 	if !ok {
 		nonfatal = fmt.Errorf("NonFatal: Unavailable disperssion correction requested, using default")
 		disp = "d"
+	}
+	//ugly, hopefully temporary, hack to properly support the hf-3c method in qcmine.
+	if method=="hf-3c"{
+		minix:= os.ExpandEnv("${MINIX}")
+		if minix==""{
+			minix="."
+		}
+		minix=minix+"/MINIX"
+		basis=fmt.Sprintf("READ_BASISSET %s basissetfile=%s %s add= {SV_BASIS_PROJECT STO-3G}",b,minix,b)
+		disp=""
+		Q.BSSE=""
 	}
 	if !strings.HasSuffix(method, "-d") && disp != "" {
 		method = strings.Join([]string{method, disp}, "-")
@@ -174,8 +189,6 @@ func (O *CSHandle) BuildInput(coords *chem.VecMatrix, atoms chem.ReadRef, Q *Cal
 		command = "dl-find \\\n"
 	}
 	_, _ = fmt.Fprint(file, command)
-	b := "\\\n             " //break
-	sb := "\\\n    "
 	link := "0"
 	if O.link {
 		link = "1"
@@ -185,7 +198,7 @@ func (O *CSHandle) BuildInput(coords *chem.VecMatrix, atoms chem.ReadRef, Q *Cal
 		mpi=fmt.Sprintf("%s mpi_nprocs=$::env(mpi_nprocs) %s mpi_mf=$::env(mpi_mf) %s mpi_omp=$::env(mpi_omp)] %s",b,b,b,sb)
 	}
 	//I admit the following is horrible. Just take a leap of faith
-	arguments := fmt.Sprintf("     theory= %s : [ list basis=%s %s hamiltonian=%s %s accuracy=high %s link=%s %s charge=%d %s jobname=%s %s useghosts=0 %s coords=%s.crd %s %s list_option=full\n\n", O.program, basis, b, method, b, b, link, b, atoms.Charge(), b, O.inputname, b, mpi, O.inputname, sb, optline)
+	arguments := fmt.Sprintf("     theory= %s : [ list basis=%s %s guess=SUPER %s hamiltonian=%s %s accuracy=high %s link=%s %s charge=%d %s jobname=%s %s useghosts=0 %s coords=%s.crd %s %s list_option=full\n\n", O.program, basis, b, b, method, b, b, link, b, atoms.Charge(), b, O.inputname, b, mpi, O.inputname, sb, optline)
 	_, _ = fmt.Fprint(file, arguments)
 	_, _ = fmt.Fprint(file, writeline)
 	return nonfatal
@@ -200,6 +213,8 @@ var qcMineDisp = map[string]string{
 var chemShellMethods = map[string]string{
 	"HF":     "hf",
 	"hf":     "hf",
+	"hf-3c":  "hf-3c",
+	"HF-3c":  "hf-3c",
 	"b3lyp":  "b3-lyp",
 	"B3LYP":  "b3-lyp",
 	"b3-lyp": "b3-lyp",

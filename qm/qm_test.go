@@ -210,7 +210,7 @@ func TestChemShell(Te *testing.T) {
 	mol.SetMulti(1)
 	calc := new(Calc)
 	calc.Optimize = true
-	calc.Method = "BLYP"
+	calc.Method = "HF-3c"
 	calc.Dielectric = 4
 	calc.Basis = "def2-SVP"
 	calc.Grid = 4 //not supported yet, coming sun
