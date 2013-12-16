@@ -157,7 +157,7 @@ func (O *CSHandle) BuildInput(coords *chem.VecMatrix, atoms chem.ReadRef, Q *Cal
 
 	} else {
 		chem.XYZWrite(fmt.Sprintf("%s.xyz", O.inputname), coords, atoms)
-		coordline = fmt.Sprintf("read_xyz %s.xyz coords=%s.crd \nset residues [ res_selectall coords=%s.crd ]\n", O.inputname, O.inputname, O.inputname)
+		coordline = fmt.Sprintf("read_xyz file=%s.xyz coords=%s.crd \nset residues [ res_selectall coords=%s.crd ]\n", O.inputname, O.inputname, O.inputname)
 	}
 	frozen := ""
 	optline := ""
@@ -189,8 +189,8 @@ func (O *CSHandle) BuildInput(coords *chem.VecMatrix, atoms chem.ReadRef, Q *Cal
 		command = "dl-find \\\n"
 	}
 	_, _ = fmt.Fprint(file, command)
-	b := "\\\n             " //break
-	sb := "\\\n    "
+//	b := "\\\n             " //break
+//	sb := "\\\n    "
 	link := "0"
 	if O.link {
 		link = "1"
