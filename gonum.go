@@ -37,7 +37,6 @@ import (
 	"fmt"
 	"github.com/gonum/blas/cblas"
 	"github.com/gonum/matrix/mat64"
-	"github.com/gonum/matrix/mat64/la"
 	"math"
 	"sort"
 )
@@ -77,7 +76,6 @@ func NewVecs(data []float64) (*VecMatrix, error) {
 	r, err := mat64.NewDense(rows, cols, data)
 	return &VecMatrix{r}, err
 }
-
 
 //Puts a view of the given col of the matrix on the receiver
 func (F *VecMatrix) ColView(i int) *VecMatrix {
@@ -180,7 +178,7 @@ func (F *VecMatrix) Sub(A *VecMatrix, B Matrix){
 */
 
 func gnInverse(F *VecMatrix) *VecMatrix {
-	a := la.Inverse(F.Dense)
+	a := mat64.Inverse(F.Dense)
 	return &VecMatrix{a}
 
 }
@@ -317,13 +315,15 @@ func (E eigenpair) Len() int {
 //That the eigenvectors and eigenvalues are sorted according to the eigenvalues
 //It also guarantees orthonormality and handness. I don't know how many of
 //these are already guaranteed by Eig(). Will delete the unneeded parts
-//And even this whole function when sure.
-func gnEigen(in *VecMatrix, epsilon float64) (*VecMatrix, []float64, error) {
+//And even this whole function when sure. The main reason for this function
+//Is the compatibiliy with go.matrix. This function should dissapear when we
+//have a pure Go blas.
+func EigenWrap(in *VecMatrix, epsilon float64) (*VecMatrix, []float64, error) {
 	var err error
 	if epsilon < 0 {
 		epsilon = appzero
 	}
-	efacs := la.Eigen(mat64.DenseCopyOf(in.Dense), epsilon)
+	efacs := mat64.Eigen(mat64.DenseCopyOf(in.Dense), epsilon)
 	evecs := &VecMatrix{efacs.V}
 	evalsmat := efacs.D()
 	d, _ := evalsmat.Dims()
@@ -352,6 +352,7 @@ func gnEigen(in *VecMatrix, epsilon float64) (*VecMatrix, []float64, error) {
 		for j := i + 1; j < eigrows; j++ {
 			vectorj := eig.evecs.RowView(j)
 			if math.Abs(vectori.Dot(vectorj)) > epsilon && i != j {
+				fmt.Println("FAAAAILL", eig.evecs, i, j, math.Abs(vectori.Dot(vectorj)), vectori, vectorj)
 				return eig.evecs, evals[:], notOrthogonal
 			}
 		}
@@ -381,7 +382,7 @@ func gnEigen(in *VecMatrix, epsilon float64) (*VecMatrix, []float64, error) {
 
 //Returns the singular value decomposition of matrix A
 func gnSVD(A *chemDense) (*chemDense, *chemDense, *chemDense) {
-	facts := la.SVD(A.Dense, appzero, appzero, true, true) //I am not sure that the second appzero is appropiate
+	facts := mat64.SVD(A.Dense, appzero, math.SmallestNonzeroFloat64, true, true) //I am not sure that the second appzero is appropiate
 	//make sigma a matrix
 	//	lens:=len(s)
 	//	Sigma, _ := mat64.NewDense(lens, lens, make([]float64, lens*lens)) //the slice is hardcoded, no error

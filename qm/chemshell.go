@@ -189,6 +189,8 @@ func (O *CSHandle) BuildInput(coords *chem.VecMatrix, atoms chem.ReadRef, Q *Cal
 		command = "dl-find \\\n"
 	}
 	_, _ = fmt.Fprint(file, command)
+	b := "\\\n             " //break
+	sb := "\\\n    "
 	link := "0"
 	if O.link {
 		link = "1"

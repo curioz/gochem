@@ -36,7 +36,6 @@ import "fmt"
 import "os/exec"
 import "github.com/rmera/gochem"
 
-
 type MopacHandle struct {
 	defmethod string
 	command   string
@@ -52,7 +51,6 @@ func NewMopacHandle() *MopacHandle {
 }
 
 //MopacHandle methods
-
 
 //Sets the name for the job, used for input
 //and output files (ex. input will be name.inp).
@@ -86,7 +84,7 @@ func (O *MopacHandle) BuildInput(coords *chem.VecMatrix, atoms chem.ReadRef, Q *
 		return fmt.Errorf("Missing charges or coordinates")
 	}
 	ValidMethods := []string{"PM3", "PM6", "PM7", "AM1"}
-	if Q.Method=="" || !isInString(ValidMethods, Q.Method[0:3]) { //not found
+	if Q.Method == "" || !isInString(ValidMethods, Q.Method[0:3]) { //not found
 		fmt.Fprintf(os.Stderr, "no method assigned for MOPAC calculation, will used the default %s, \n", O.defmethod)
 		Q.Method = O.defmethod
 	}
@@ -224,7 +222,7 @@ func (O *MopacHandle) OptimizedGeometry(atoms chem.Ref) (*chem.VecMatrix, error)
 	}
 	defer file.Close()
 	out := bufio.NewReader(file)
-	err = fmt.Errorf("Mopac Energy not found in %s", O.inputname)
+	err = fmt.Errorf("Mopac Geometries not found in %s", O.inputname)
 	//some variables that will be changed/increased during the next for loop
 	final_point := false //to see if we got to the right part of the file
 	reading := false     //start reading
@@ -243,7 +241,8 @@ func (O *MopacHandle) OptimizedGeometry(atoms chem.Ref) (*chem.VecMatrix, error)
 			continue
 		}
 
-		if !reading && (strings.Contains(line, "FINAL  POINT  AND  DERIVATIVES") || strings.Contains(line, "GEOMETRY OPTIMISED")) {
+		//MOPAC output is a pleasure to parse. IF YOU ARE A F*** PERKELEN CTM MASOCHIST!!!!!!!!!!!!!!!!!!!
+		if !reading && (strings.Contains(line, "FINAL  POINT  AND  DERIVATIVES") || strings.Contains(line, "GEOMETRY OPTIMISED")) || strings.Contains(line,"GRADIENTS WERE INITIALLY ACCEPTABLY SMALL") {
 			final_point = true
 			continue
 		}
